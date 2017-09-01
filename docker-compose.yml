@@ -1,0 +1,46 @@
+version: '2.1'
+
+#
+# [ networks definition for atlassian and our (other) proxy services ]
+#
+networks:
+    default:
+        driver: bridge
+
+services:
+
+    #
+    # web server
+    #
+    web:
+        image: nginx:latest
+        ports:
+            - "80:80"
+
+        volumes:
+            - ./code:/code
+            - ./001-nginx/local-dev.conf:/etc/nginx/conf.d/site.conf
+        links:
+            - php
+
+        healthcheck:
+            test: ["CMD", "curl", "--noproxy", "-f", "http://localhost:80"]
+            interval: 5s
+            timeout: 5s
+            retries: 3
+
+        networks:
+            - default
+
+    #
+    # php fpm
+    #
+    php:
+        build:
+            context: ./000-php
+
+        volumes:
+            - ./code:/code
+
+        networks:
+            - default
